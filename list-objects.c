@@ -143,8 +143,7 @@ static void process_tree(struct traversal_context *ctx,
 	struct rev_info *revs = ctx->revs;
 	int baselen = base->len;
 	enum list_objects_filter_result r = LOFR_MARK_SEEN | LOFR_DO_SHOW;
-	int gently = revs->ignore_missing_links ||
-		     revs->exclude_promisor_objects;
+	int parsed;
 
 	if (!revs->tree_objects)
 		return;
@@ -152,20 +151,21 @@ static void process_tree(struct traversal_context *ctx,
 		die("bad tree object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
-	if (parse_tree_gently(tree, gently) < 0) {
+	parsed = parse_tree_gently(tree, /*quiet_on_missing=*/1) >= 0;
+	if (!parsed) {
 		if (revs->ignore_missing_links)
 			return;
+
+		if (!is_promisor_object(&obj->oid))
+			die("bad tree object %s", oid_to_hex(&obj->oid));
 
 		/*
 		 * Pre-filter known-missing tree objects when explicitly
 		 * requested.  This may cause the actual filter to report
 		 * an incomplete list of missing objects.
 		 */
-		if (revs->exclude_promisor_objects &&
-		    is_promisor_object(&obj->oid))
+		if (revs->exclude_promisor_objects)
 			return;
-
-		die("bad tree object %s", oid_to_hex(&obj->oid));
 	}
 
 	strbuf_addstr(base, name);
@@ -180,7 +180,8 @@ static void process_tree(struct traversal_context *ctx,
 	if (base->len)
 		strbuf_addch(base, '/');
 
-	process_tree_contents(ctx, tree, base);
+	if (parsed)
+		process_tree_contents(ctx, tree, base);
 
 	if (!(obj->flags & USER_GIVEN) && ctx->filter_fn) {
 		r = ctx->filter_fn(LOFS_END_TREE, obj,
