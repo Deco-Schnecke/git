@@ -743,6 +743,9 @@ specification contained in <path>.
 	A debug option to help with future "partial clone" development.
 	This option specifies how missing objects are handled.
 +
+The form '--filter=tree:<depth>' omits all blobs and trees deeper than
+<depth> from the root tree. Currently, only <depth>=0 is supported.
++
 The form '--missing=error' requests that rev-list stop with an error if
 a missing object is encountered.  This is the default action.
 +
