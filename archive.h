@@ -3,6 +3,9 @@
 
 #include "pathspec.h"
 
+struct object_id;
+enum object_type;
+
 struct archiver_args {
 	const char *base;
 	size_t baselen;

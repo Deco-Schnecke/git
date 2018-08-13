@@ -1,6 +1,13 @@
 #ifndef FSMONITOR_H
 #define FSMONITOR_H
 
+#include "cache.h"
+#include "dir.h"
+
+struct cache_entry;
+struct index_state;
+struct strbuf;
+
 extern struct trace_key trace_fsmonitor;
 
 /*
