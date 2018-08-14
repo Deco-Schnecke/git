@@ -4,6 +4,8 @@
 #include "pathspec.h"
 
 struct repository;
+struct object_id;
+enum object_type;
 
 struct archiver_args {
 	struct repository *repo;

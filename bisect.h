@@ -1,6 +1,8 @@
 #ifndef BISECT_H
 #define BISECT_H
 
+struct commit_list;
+
 #define BISECT_FIND_ALL		(1u<<0)
 
 /*

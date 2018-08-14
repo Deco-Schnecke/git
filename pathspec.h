@@ -1,6 +1,11 @@
 #ifndef PATHSPEC_H
 #define PATHSPEC_H
 
+#include "string.h"
+#include "strings.h"
+
+struct index_state;
+
 /* Pathspec magic */
 #define PATHSPEC_FROMTOP	(1<<0)
 #define PATHSPEC_MAXDEPTH	(1<<1)
