@@ -584,6 +584,7 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 	if (istate->name_hash_initialized)
 		return;
+	trace_performance_enter();
 	hashmap_init(&istate->name_hash, cache_entry_cmp, NULL, istate->cache_nr);
 	hashmap_init(&istate->dir_hash, dir_entry_cmp, NULL, istate->cache_nr);
 
@@ -604,7 +605,6 @@ static void lazy_init_name_hash(struct index_state *istate)
 	}
 
 	istate->name_hash_initialized = 1;
-	trace_performance_since(start, "initialize name hash");
 
 	if (slog_want_detail_event("index")) {
 		struct json_writer jw = JSON_WRITER_INIT;
@@ -629,6 +629,8 @@ static void lazy_init_name_hash(struct index_state *istate)
 		slog_emit_detail_event("index", "lazy_init_name_hash", &jw);
 		jw_release(&jw);
 	}
+
+	trace_performance_leave("initialize name hash");
 }
 
 /*

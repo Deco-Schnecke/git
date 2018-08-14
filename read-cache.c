@@ -1476,8 +1476,8 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	const char *typechange_fmt;
 	const char *added_fmt;
 	const char *unmerged_fmt;
-	uint64_t start = getnanotime();
 
+	trace_performance_enter();
 	modified_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
 	deleted_fmt = (in_porcelain ? "D\t%s\n" : "%s: needs update\n");
 	typechange_fmt = (in_porcelain ? "T\t%s\n" : "%s needs update\n");
@@ -1547,7 +1547,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 
 		replace_index_entry(istate, i, new_entry);
 	}
-	trace_performance_since(start, "refresh index");
+	trace_performance_leave("refresh index");
 	return has_errors;
 }
 
@@ -2003,7 +2003,6 @@ int read_index_from(struct index_state *istate, const char *path,
 		    const char *gitdir)
 {
 	int slog_tid;
-	uint64_t start = getnanotime();
 	struct split_index *split_index;
 	int ret;
 	char *base_oid_hex;
@@ -2014,9 +2013,10 @@ int read_index_from(struct index_state *istate, const char *path,
 		return istate->cache_nr;
 
 	slog_tid = slog_start_timer("index", "do_read_index");
+	trace_performance_enter();
 	ret = do_read_index(istate, path, 0);
 	slog_stop_timer(slog_tid);
-	trace_performance_since(start, "read cache %s", path);
+	trace_performance_leave("read cache %s", path);
 
 	slog_aux_intmax("index", "cache_nr", istate->cache_nr);
 
@@ -2026,6 +2026,7 @@ int read_index_from(struct index_state *istate, const char *path,
 		return ret;
 	}
 
+	trace_performance_enter();
 	if (split_index->base)
 		discard_index(split_index->base);
 	else
@@ -2046,8 +2047,8 @@ int read_index_from(struct index_state *istate, const char *path,
 	freshen_shared_index(base_path, 0);
 	merge_base_index(istate);
 	post_read_index_from(istate);
-	trace_performance_since(start, "read cache %s", base_path);
 	free(base_path);
+	trace_performance_leave("read cache %s", base_path);
 	return ret;
 }
 
@@ -2953,6 +2954,8 @@ void move_index_extensions(struct index_state *dst, struct index_state *src)
 {
 	dst->untracked = src->untracked;
 	src->untracked = NULL;
+	dst->cache_tree = src->cache_tree;
+	src->cache_tree = NULL;
 }
 
 struct cache_entry *dup_cache_entry(const struct cache_entry *ce,
