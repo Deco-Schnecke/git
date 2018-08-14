@@ -170,6 +170,33 @@ test_expect_success 'partial clone fetches blobs pointed to by refs even if norm
 	git -C dst fsck
 '
 
+test_expect_success 'can use tree:0 to filter partial clone' '
+	rm -rf dst &&
+	git clone --no-checkout --filter=tree:0 "file://$(pwd)/srv.bare" dst &&
+	git -C dst rev-list master --missing=allow-any --objects >fetched_objects &&
+	cat fetched_objects \
+		| awk -f print_1.awk \
+		| xargs -n1 git -C dst cat-file -t >fetched_types &&
+	sort fetched_types -u >unique_types.observed &&
+	echo commit > unique_types.expected &&
+	test_cmp unique_types.observed unique_types.expected
+'
+
+test_expect_success 'show missing tree objects with --missing=print' '
+	git -C dst rev-list master --missing=print --quiet --objects >missing_objs &&
+	sed "s/?//" missing_objs \
+		| xargs -n1 git -C srv.bare cat-file -t \
+		>missing_types &&
+	sort -u missing_types >missing_types.uniq &&
+	echo tree >expected &&
+	test_cmp missing_types.uniq expected
+'
+
+test_expect_success 'do not complain when a missing tree cannot be parsed' '
+	git -C dst rev-list master --missing=print --quiet --objects 2>rev_list_err >&2 &&
+	! grep -q "Could not read " rev_list_err
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
