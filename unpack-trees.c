@@ -350,6 +350,12 @@ static int check_updates(struct unpack_trees_options *o)
 	state.refresh_cache = 1;
 	state.istate = index;
 
+	if (o->clone) {
+		state.clone = 1;
+		for (i = 0; i < index->cache_nr; i++)
+			index->cache[i]->ce_flags &= ~CE_MATCHED;
+	}
+
 	progress = get_progress(o);
 
 	if (o->update)
@@ -414,6 +420,28 @@ static int check_updates(struct unpack_trees_options *o)
 	errs |= finish_delayed_checkout(&state);
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
+
+	if (o->clone) {
+		int printed_warning = 0;
+
+		for (i = 0; i < index->cache_nr; i++) {
+			struct cache_entry *ce = index->cache[i];
+
+			if (!(ce->ce_flags & CE_MATCHED))
+				continue;
+
+			if (!printed_warning) {
+				warning(_("the following paths have collided (e.g. case-sensitive paths\n"
+					  "on a case-insensitive filesystem) and only one from the same\n"
+					  "colliding group is in the working tree:\n"));
+				printed_warning = 1;
+			}
+
+			fprintf(stderr, "  '%s'\n", ce->name);
+			ce->ce_flags &= ~CE_MATCHED;
+		}
+	}
+
 	return errs != 0;
 }
 
